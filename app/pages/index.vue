@@ -98,7 +98,7 @@ const $axios = useAxios()
 
 const loading = ref(true)
 const userRole = ref(null)
-const interfaceRole = ref(null) // UI роль (для админа переключение)
+const interfaceRole = ref(null)
 const adminTab = ref('menu')
 
 const items = [
@@ -111,20 +111,29 @@ const items = [
   { key: 'reports', label: '📄 Отчёты' },
 ]
 
-// переключение UI роли
+// UI переключение ролей для админа
 function switchRole(role) {
   interfaceRole.value = role
 }
 
-// auth
 async function authenticate() {
   try {
+    // читаем telegram_id из query
+    const params = new URLSearchParams(window.location.search)
+    const telegramId = params.get('telegram_id')
+
+    if (!telegramId) {
+      console.warn('No telegram_id in URL')
+      userRole.value = null
+      return
+    }
+
     const gen = await $axios.post('/auth/generate-code', null, {
-      params: { telegram_id: 1182328234 },
+      params: { telegram_id: telegramId }
     })
 
     const login = await $axios.get('/auth/login-by-code', {
-      params: { code: gen.data.code },
+      params: { code: gen.data.code }
     })
 
     const { access_token, user } = login.data
@@ -134,8 +143,6 @@ async function authenticate() {
     localStorage.setItem('roles', JSON.stringify([user.role]))
 
     userRole.value = user.role
-
-    // если админ — по умолчанию UI режим = admin
     interfaceRole.value = user.role === 'admin' ? 'admin' : user.role
 
   } catch (err) {
