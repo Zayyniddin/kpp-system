@@ -25,15 +25,15 @@
       <!-- Date range -->
       <div class="space-y-2">
         <label class="block text-sm font-semibold text-gray-700">Период</label>
-        <el-date-picker
+        <MobileDateRange
           v-model="dateRange"
           type="daterange"
           unlink-panels
           start-placeholder="Дата с"
           end-placeholder="Дата по"
           value-format="YYYY-MM-DD"
-          size="large"
-          class="w-full [&>.el-input__wrapper]:h-[52px] [&>.el-input__wrapper]:rounded-xl"
+          size="small"
+          class="max-w-full"
         />
       </div>
 
@@ -100,7 +100,7 @@ async function downloadReport() {
       end_date: dateRange.value?.[1] || undefined,
     }
 
-    const { data } = await $axios.get('/admin/logs/export', {
+    const { data } = await $axios.post('/admin/logs/export-to-telegram', {
       params,
       responseType: 'blob',
     })

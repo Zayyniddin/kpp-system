@@ -42,7 +42,7 @@
       </div>
 
       <!-- Склад -->
-      <div>
+      <div v-if="form.role !== 'admin'">
         <label class="text-sm text-gray-700 mb-1 block">Склад *</label>
         <select
           v-model="form.warehouse_id"
@@ -72,6 +72,7 @@
           <span>Сохраняем...</span>
         </div>
       </button>
+
     </div>
   </div>
 </template>
@@ -87,28 +88,21 @@ const loading = ref(false)
 
 const form = ref({
   full_name: '',
-  phone_number: '', // здесь лежит 998********
+  phone_number: '',
   role: '',
   warehouse_id: ''
 })
 
-const phoneInput = ref("") // красивый формат +998 ** *** ** **
-
+const phoneInput = ref("")
 
 function formatPhone(e) {
   let digits = e.target.value.replace(/\D/g, '')
-
-  // убираем 998 если ввели вручную
   if (digits.startsWith('998')) digits = digits.slice(3)
-
-  // ограничиваем только 9 цифрами после 998
   if (digits.length > 9) digits = digits.slice(0, 9)
 
-  // формат отображения
   const formatted =
-    `+998 ${digits.slice(0, 2)} ${digits.slice(2, 5)} ${digits.slice(5, 7)} ${digits.slice(7, 9)}`
-      .trim()
-      .replace(/\s+$/, '')
+    `+998 ${digits.slice(0,2)} ${digits.slice(2,5)} ${digits.slice(5,7)} ${digits.slice(7,9)}`
+      .trim().replace(/\s+$/, '')
 
   phoneInput.value = formatted
   form.value.phone_number = `998${digits}`
@@ -119,11 +113,7 @@ async function loadWarehouses() {
     const { data } = await $axios.get('/admin/warehouses')
     warehouses.value = data
   } catch {
-    ElNotification({
-      title: 'Ошибка',
-      message: 'Не удалось загрузить список складов',
-      type: 'error'
-    })
+    ElNotification({ title: 'Ошибка', message: 'Не удалось загрузить склады', type: 'error' })
   }
 }
 
@@ -131,15 +121,13 @@ function validate() {
   if (!form.value.full_name.trim()) return 'Введите имя'
   if (form.value.phone_number.length !== 12) return 'Введите корректный номер'
   if (!form.value.role) return 'Выберите роль'
-  if (!form.value.warehouse_id) return 'Выберите склад'
+  if (form.value.role !== "admin" && !form.value.warehouse_id) return 'Выберите склад'
   return null
 }
 
 async function createUser() {
   const err = validate()
-  if (err) {
-    return ElNotification({ title: 'Ошибка', message: err, type: 'error' })
-  }
+  if (err) return ElNotification({ title: 'Ошибка', message: err, type: 'error' })
 
   loading.value = true
   try {
@@ -147,14 +135,10 @@ async function createUser() {
       full_name: form.value.full_name.trim(),
       phone_number: form.value.phone_number,
       role: form.value.role,
-      warehouse_id: form.value.warehouse_id
+      warehouse_id: form.value.role === "admin" ? null : form.value.warehouse_id
     })
 
-    ElNotification({
-      title: 'Успех',
-      message: 'Пользователь создан ✅',
-      type: 'success'
-    })
+    ElNotification({ title: 'Успех', message: 'Пользователь создан ✅', type: 'success' })
 
     form.value = { full_name: '', phone_number: '', role: '', warehouse_id: '' }
     phoneInput.value = ''
