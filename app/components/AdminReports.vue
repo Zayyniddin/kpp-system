@@ -6,34 +6,45 @@
       <h2 class="text-xl font-bold text-gray-800">📄 Отчёты</h2>
     </div>
 
-    <!-- Filters Card -->
+    <!-- Filters -->
     <div class="bg-white rounded-2xl p-5 shadow-md space-y-5 border border-gray-100">
 
-      <!-- Type -->
+      <!-- Тип -->
       <div class="space-y-2">
         <label class="block text-sm font-semibold text-gray-700">Тип отчёта</label>
         <select
           v-model="reportType"
-          class="w-full px-4 py-3 rounded-xl bg-white border border-gray-300 focus:border-blue-500 outline-none text-base transition-all"
+          class="w-full px-4 py-3 rounded-xl bg-white border border-gray-300 focus:border-blue-600 outline-none text-base transition"
         >
-          <option value="both">📦 Все записи (въезды + выезды)</option>
-          <option value="entries">🚛 Только въезды</option>
-          <option value="exits">🚚 Только выезды</option>
+          <option value="both">📦 Все записи</option>
+          <option value="entries">🚛 Въезды</option>
+          <option value="exits">🚚 Выезды</option>
         </select>
       </div>
 
-      <!-- Date range -->
+      <!-- Start -->
       <div class="space-y-2">
-        <label class="block text-sm font-semibold text-gray-700">Период</label>
-        <MobileDateRange
-          v-model="dateRange"
-          type="daterange"
-          unlink-panels
-          start-placeholder="Дата с"
-          end-placeholder="Дата по"
+        <label class="block text-sm font-semibold text-gray-700">Дата с</label>
+        <el-date-picker
+          v-model="startDate"
+          type="date"
+          placeholder="Выберите дату"
+          format="YYYY-MM-DD"
           value-format="YYYY-MM-DD"
-          size="small"
-          class="max-w-full"
+          class="w-full [&_.el-input__wrapper]:h-[50px]"
+        />
+      </div>
+
+      <!-- End -->
+      <div class="space-y-2">
+        <label class="block text-sm font-semibold text-gray-700">Дата по</label>
+        <el-date-picker
+          v-model="endDate"
+          type="date"
+          placeholder="Выберите дату"
+          format="YYYY-MM-DD"
+          value-format="YYYY-MM-DD"
+          class="w-full [&_.el-input__wrapper]:h-[50px]"
         />
       </div>
 
@@ -42,7 +53,7 @@
         <label class="block text-sm font-semibold text-gray-700">Склад</label>
         <select
           v-model="warehouseId"
-          class="w-full px-4 py-3 rounded-xl bg-white border border-gray-300 focus:border-blue-500 outline-none text-base transition-all"
+          class="w-full px-4 py-3 rounded-xl bg-white border border-gray-300 focus:border-blue-600 outline-none text-base transition"
         >
           <option value="">🏭 Все склады</option>
           <option v-for="w in warehouses" :key="w.id" :value="w.id">
@@ -53,36 +64,40 @@
 
       <!-- Button -->
       <button
-        @click="downloadReport"
+        @click="sendReport"
         :disabled="loading"
-        class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl py-4 font-semibold text-base shadow-sm active:scale-[.97] disabled:opacity-50 transition"
+        class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl py-4 font-semibold shadow-sm active:scale-[.97] disabled:opacity-50"
       >
         <span v-if="!loading" class="flex items-center justify-center gap-2">
-          📥 Скачать отчёт
+          📤 Отправить в Telegram
         </span>
-        <span v-else class="flex items-center gap-2 justify-center">
+
+        <span v-else class="flex items-center justify-center gap-2">
           <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-          Формируем...
+          Отправляем...
         </span>
       </button>
     </div>
 
     <p class="text-center text-gray-500 text-xs">
-      Файл будет скачан с учётом выбранных фильтров
+      Отчёт будет отправлен в Telegram 📎
     </p>
+
   </div>
 </template>
 
 <script setup>
-import { useAxios } from '~/composables/useAxios'
+import { ref, onMounted } from 'vue'
 import { ElNotification } from 'element-plus'
+import { useAxios } from '~/composables/useAxios'
 
 const $axios = useAxios()
 
 const warehouses = ref([])
 const warehouseId = ref('')
-const dateRange = ref([])
-const reportType = ref('both') // default
+const startDate = ref('')
+const endDate = ref('')
+const reportType = ref('both')
 const loading = ref(false)
 
 async function loadWarehouses() {
@@ -90,30 +105,33 @@ async function loadWarehouses() {
   warehouses.value = data
 }
 
-async function downloadReport() {
+async function sendReport() {
+  if (!startDate.value || !endDate.value) {
+    return ElNotification({ title: 'Ошибка', message: 'Выберите период', type: 'error' })
+  }
+
   loading.value = true
   try {
-    const payload = {
+    const params = {
       type: reportType.value,
-      warehouse_id: warehouseId.value || null,
-      start_date: dateRange.value?.[0] || null,
-      end_date: dateRange.value?.[1] || null,
+      warehouse_id: warehouseId.value || undefined,
+      start_date: startDate.value,
+      end_date: endDate.value,
     }
 
-    await $axios.post('/admin/logs/export-to-telegram', payload)
+    await $axios.post('/admin/logs/export-to-telegram', null, { params })
 
     ElNotification({
-      title: 'Готово',
-      message: 'Отчёт успешно отправлен в Telegram ✅',
+      title: '✅ Успех',
+      message: 'Отчёт отправлен в Telegram',
       type: 'success',
-      duration: 3000
     })
-  } catch (err) {
+
+  } catch (e) {
     ElNotification({
       title: 'Ошибка',
-      message: err.response?.data?.message || 'Не удалось отправить отчёт',
+      message: e.response?.data?.message || 'Не удалось отправить отчёт',
       type: 'error',
-      duration: 3000
     })
   } finally {
     loading.value = false

@@ -17,8 +17,8 @@
     </div>
 
     <!-- Loader -->
-    <div v-if="loading" class="space-y-2">
-      <div v-for="n in 4" :key="n" class="h-16 bg-gray-200/60 animate-pulse rounded-xl"></div>
+    <div v-if="loading" class="flex justify-center pt-10 pb-20">
+      <div class="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
     </div>
 
     <!-- Empty -->
@@ -41,17 +41,21 @@
         <!-- Header -->
         <div class="flex justify-between items-center mb-1">
           <h3 class="font-semibold text-gray-900 text-base">{{ u.full_name }}</h3>
+
+          <!-- delete circle button -->
           <button
             @click="confirmDelete(u)"
-            class="text-red-600 text-sm font-medium hover:underline active:scale-95 transition"
+            class="w-9 h-9 flex items-center justify-center rounded-full bg-red-50 text-red-600 hover:bg-red-100 active:scale-90 transition"
+            title="Удалить"
           >
-            🗑 удалить
+            ✕
           </button>
         </div>
 
         <!-- Phone -->
         <div class="text-sm text-gray-700 flex items-center gap-1">
-          📞 <a :href="`tel:+${u.phone_number}`" class="text-blue-600 font-medium">
+          📞
+          <a :href="`tel:+${u.phone_number}`" class="text-blue-600 font-medium">
             {{ formatPhone(u.phone_number) }}
           </a>
         </div>
@@ -64,8 +68,11 @@
             🧑‍💼 {{ roleLabel(u.role) }}
           </span>
 
-          <!-- warehouse -->
-          <span class="px-2 py-0.5 rounded-md text-xs bg-green-100 text-green-700 flex items-center gap-1">
+          <!-- warehouse (only if exists) -->
+          <span
+            v-if="u.warehouse_id"
+            class="px-2 py-0.5 rounded-md text-xs bg-green-100 text-green-700 flex items-center gap-1"
+          >
             🏢 {{ warehouseName(u.warehouse_id) }}
           </span>
 
@@ -76,7 +83,6 @@
           >
             {{ u.is_active ? 'Активен ✅' : 'Отключен ❌' }}
           </span>
-
         </div>
       </div>
     </div>
@@ -102,6 +108,7 @@
         </div>
       </div>
     </el-dialog>
+
   </div>
 </template>
 
@@ -118,7 +125,6 @@ const warehouses = ref([])
 const loading = ref(true)
 const search = ref("")
 
-// modal state
 const deleteDialog = ref({ show: false, user: null })
 
 async function loadUsers() {

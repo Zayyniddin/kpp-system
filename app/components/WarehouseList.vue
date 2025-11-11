@@ -6,9 +6,9 @@
       <h2 class="text-xl font-bold text-gray-800">📦 Склады</h2>
     </div>
 
-    <!-- Loader -->
-    <div v-if="loading" class="space-y-3">
-      <div v-for="n in 3" :key="n" class="h-16 bg-gray-200/60 animate-pulse rounded-xl"></div>
+    <!-- Loader circle -->
+    <div v-if="loading" class="flex justify-center pt-10 pb-20">
+      <div class="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
     </div>
 
     <!-- Empty -->
@@ -31,20 +31,18 @@
             {{ wh.name }}
           </div>
 
+          <!-- delete button -->
           <button
             @click="confirmDelete(wh)"
-            class="text-red-600 text-sm font-medium hover:underline active:scale-95 transition"
+            class="w-9 h-9 flex items-center justify-center rounded-full bg-red-50 text-red-600 hover:bg-red-100 active:scale-90 transition"
+            title="Удалить"
           >
-            🗑 удалить
+            ✕
           </button>
         </div>
 
         <div class="text-sm text-gray-700 flex items-center gap-1">
           📍 <span>{{ wh.address }}</span>
-        </div>
-
-        <div class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-md w-fit flex items-center gap-1">
-          👥 {{ wh.telegram_group_id }}
         </div>
 
         <div class="text-xs text-gray-500">
