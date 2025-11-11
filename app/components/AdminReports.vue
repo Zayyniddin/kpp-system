@@ -22,31 +22,12 @@
         </select>
       </div>
 
-      <!-- Start -->
+      <!-- Date range (mobile custom picker) -->
       <div class="space-y-2">
-        <label class="block text-sm font-semibold text-gray-700">Дата с</label>
-        <el-date-picker
-          v-model="startDate"
-          type="date"
-          placeholder="Выберите дату"
-          format="YYYY-MM-DD"
-          value-format="YYYY-MM-DD"
-          class="w-full [&_.el-input__wrapper]:h-[50px]"
-           input-readonly
-        />
-      </div>
-
-      <!-- End -->
-      <div class="space-y-2">
-        <label class="block text-sm font-semibold text-gray-700">Дата по</label>
-        <el-date-picker
-          v-model="endDate"
-          type="date"
-          placeholder="Выберите дату"
-          format="YYYY-MM-DD"
-          value-format="YYYY-MM-DD"
-          class="w-full [&_.el-input__wrapper]:h-[50px]"
-           input-readonly
+        <label class="block text-sm font-semibold text-gray-700">Период</label>
+        <MobileDateRange
+          v-model="dateRange"
+          class="w-full"
         />
       </div>
 
@@ -55,6 +36,7 @@
         <label class="block text-sm font-semibold text-gray-700">Склад</label>
         <select
           v-model="warehouseId"
+          @focus="$event.target.blur()"
           class="w-full px-4 py-3 rounded-xl bg-white border border-gray-300 focus:border-blue-600 outline-none text-base transition"
         >
           <option value="">🏭 Все склады</option>
@@ -89,17 +71,17 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { ElNotification } from 'element-plus'
 import { useAxios } from '~/composables/useAxios'
+import MobileDateRange from '~/components/MobileDateRange.vue'
 
 const $axios = useAxios()
 
 const warehouses = ref([])
 const warehouseId = ref('')
-const startDate = ref('')
-const endDate = ref('')
 const reportType = ref('both')
+const dateRange = ref([]) // [start, end]
 const loading = ref(false)
 
 async function loadWarehouses() {
@@ -108,32 +90,33 @@ async function loadWarehouses() {
 }
 
 async function sendReport() {
-  if (!startDate.value || !endDate.value) {
+  if (!dateRange.value?.[0] || !dateRange.value?.[1]) {
     return ElNotification({ title: 'Ошибка', message: 'Выберите период', type: 'error' })
   }
 
   loading.value = true
-  try {
-    const params = {
-      type: reportType.value,
-      warehouse_id: warehouseId.value || undefined,
-      start_date: startDate.value,
-      end_date: endDate.value,
-    }
 
-    await $axios.post('/admin/logs/export-to-telegram', null, { params })
+  try {
+    await $axios.post('/admin/logs/export-to-telegram', null, {
+      params: {
+        type: reportType.value,
+        warehouse_id: warehouseId.value || undefined,
+        start_date: dateRange.value[0],
+        end_date: dateRange.value[1]
+      }
+    })
 
     ElNotification({
       title: '✅ Успех',
       message: 'Отчёт отправлен в Telegram',
-      type: 'success',
+      type: 'success'
     })
 
   } catch (e) {
     ElNotification({
       title: 'Ошибка',
       message: e.response?.data?.message || 'Не удалось отправить отчёт',
-      type: 'error',
+      type: 'error'
     })
   } finally {
     loading.value = false
