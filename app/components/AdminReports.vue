@@ -93,36 +93,27 @@ async function loadWarehouses() {
 async function downloadReport() {
   loading.value = true
   try {
-    const params = {
+    const payload = {
       type: reportType.value,
-      warehouse_id: warehouseId.value || undefined,
-      start_date: dateRange.value?.[0] || undefined,
-      end_date: dateRange.value?.[1] || undefined,
+      warehouse_id: warehouseId.value || null,
+      start_date: dateRange.value?.[0] || null,
+      end_date: dateRange.value?.[1] || null,
     }
 
-    const { data } = await $axios.post('/admin/logs/export-to-telegram', {
-      params,
-      responseType: 'blob',
-    })
-
-    const url = URL.createObjectURL(new Blob([data]))
-    const a = document.createElement('a')
-    a.href = url
-    const filename = `report_${reportType.value}_${new Date().toISOString().slice(0,10)}.xlsx`
-    a.download = filename
-    a.click()
-    URL.revokeObjectURL(url)
+    await $axios.post('/admin/logs/export-to-telegram', payload)
 
     ElNotification({
       title: 'Готово',
-      message: 'Отчёт скачан ✅',
+      message: 'Отчёт успешно отправлен в Telegram ✅',
       type: 'success',
+      duration: 3000
     })
   } catch (err) {
     ElNotification({
       title: 'Ошибка',
-      message: err.response?.data?.message || 'Не удалось скачать отчёт',
+      message: err.response?.data?.message || 'Не удалось отправить отчёт',
       type: 'error',
+      duration: 3000
     })
   } finally {
     loading.value = false
