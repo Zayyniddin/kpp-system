@@ -32,7 +32,7 @@
           format="YYYY-MM-DD"
           value-format="YYYY-MM-DD"
           class="w-full [&_.el-input__wrapper]:h-[50px]"
-          :readonly="true"
+           input-readonly
         />
       </div>
 
@@ -46,7 +46,7 @@
           format="YYYY-MM-DD"
           value-format="YYYY-MM-DD"
           class="w-full [&_.el-input__wrapper]:h-[50px]"
-          :readonly="true"
+           input-readonly
         />
       </div>
 
