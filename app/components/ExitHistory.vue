@@ -51,7 +51,7 @@
           <div class="text-lg font-bold text-gray-800">
             🎫 Пропуск № {{ e.pass_number }}
           </div>
-          <div class="text-xs text-gray-500">{{ formatDate(e.created_at) }}</div>
+          <div class="text-xs text-gray-500">{{ formatDate(e.exit_time) }}</div>
         </div>
 
         <!-- Places -->
@@ -137,8 +137,16 @@ const endReached = ref(false)
 const loading = ref(false)
 
 function formatDate(date) {
-  return new Date(date).toLocaleString('ru-RU', {
-    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+  if (!date) return '—'
+  const d = new Date(date)
+  if (isNaN(d)) return '—'
+
+  return d.toLocaleString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',     // ← добавлено!
+    hour: '2-digit',
+    minute: '2-digit'
   })
 }
 
@@ -184,8 +192,10 @@ function nextPage() {
 }
 
 function prevPage() {
-  page.value--
-  fetchLogs()
+  if (page.value > 1) {
+    page.value--
+    fetchLogs()
+  }
 }
 
 watch([dateRange, warehouseId], refresh)

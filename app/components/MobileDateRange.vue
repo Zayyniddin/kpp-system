@@ -3,125 +3,70 @@
     <!-- Trigger -->
     <button
       @click="open = true"
-      class="w-full px-4 py-3 rounded-xl bg-white border border-gray-300 text-base flex justify-between items-center active:scale-[.98]"
+      class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-300 text-base flex justify-between items-center active:scale-[.98]"
     >
-      <span class="text-gray-700">{{ display }}</span>
+      <span class="text-gray-700">{{ displayLabel }}</span>
       <span class="text-gray-500 text-sm">📅</span>
     </button>
 
     <!-- Overlay -->
     <div
       v-if="open"
+      class="fixed inset-0 bg-black/40 backdrop-blur-sm z-200 flex items-end"
       @click.self="close"
-      class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] flex justify-center items-end"
     >
-      <!-- Bottom Sheet -->
-      <div class="bg-white w-full max-w-md rounded-t-2xl shadow-xl p-4 animate-slideUp">
+      <div class="bg-white w-full max-w-md rounded-t-2xl p-4 shadow-xl animate-slideUp">
+
         <div class="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-3"></div>
 
         <!-- Header -->
-        <div class="flex justify-between items-center mb-3">
-
+        <div class="flex justify-between items-center mb-4">
           <button @click="close" class="text-gray-500">Отмена</button>
-
-          <!-- View switch -->
-          <div class="bg-gray-100 rounded-full p-1 text-sm flex gap-1">
-            <button
-              class="px-3 py-1 rounded-full"
-              :class="view==='days' ? 'bg-white shadow font-semibold' : 'text-gray-600'"
-              @click="view='days'"
-            >Дни</button>
-            <button
-              class="px-3 py-1 rounded-full"
-              :class="view==='months' ? 'bg-white shadow font-semibold' : 'text-gray-600'"
-              @click="view='months'"
-            >Месяцы</button>
-            <button
-              class="px-3 py-1 rounded-full"
-              :class="view==='years' ? 'bg-white shadow font-semibold' : 'text-gray-600'"
-              @click="view='years'"
-            >Годы</button>
-          </div>
-
-          <div class="flex items-center gap-3">
-
-            <!-- ✅ CLEAR BUTTON -->
-            <button
-              v-if="start || end"
-              @click="clearDates"
-              class="text-red-500 font-medium text-sm"
-            >
-              Очистить
-            </button>
-
-            <button @click="apply" class="text-blue-600 font-semibold">
-              Готово
-            </button>
-          </div>
-
+          <span class="font-semibold text-gray-800 text-sm">Выберите период</span>
+          <button @click="apply" class="text-blue-600 font-semibold">Готово</button>
         </div>
 
-        <!-- QUICK buttons -->
-        <div v-if="view==='days'" class="flex gap-2 mb-3 overflow-x-auto no-scrollbar">
-          <button v-for="btn in quick" :key="btn.label"
-            class="px-3 py-2 rounded-lg text-sm border active:scale-95 whitespace-nowrap"
+        <!-- Inputs -->
+        <div class="space-y-4">
+          <!-- Start -->
+          <div>
+            <label class="text-xs font-medium text-gray-500 mb-1 block">Дата с:</label>
+            <el-date-picker
+              v-model="start"
+              type="date"
+              value-format="YYYY-MM-DD"
+              format="YYYY-MM-DD"
+              class="w-full"
+              :editable="false"
+              :clearable="false"
+              @mousedown.prevent
+            />
+          </div>
+
+          <!-- End -->
+          <div>
+            <label class="text-xs font-medium text-gray-500 mb-1 block">Дата по:</label>
+            <el-date-picker
+              v-model="end"
+              type="date"
+              value-format="YYYY-MM-DD"
+              format="YYYY-MM-DD"
+              class="w-full"
+              :editable="false"
+              :clearable="false"
+              @mousedown.prevent
+            />
+          </div>
+        </div>
+
+        <!-- Quick shortcuts -->
+        <div class="grid grid-cols-2 gap-2 mt-5 text-sm">
+          <button v-for="btn in buttons" :key="btn.label"
             @click="btn.action"
-          >{{ btn.label }}</button>
-        </div>
-
-        <!-- NAV -->
-        <div class="flex items-center justify-between mb-2">
-          <button @click="prev" class="px-3 py-2 rounded-lg border text-sm active:scale-95">‹</button>
-          <div class="text-sm font-semibold text-gray-800">
-            <template v-if="view==='days'">
-              {{ ruMonth(baseMonthPrev.getMonth()) }} {{ baseMonthPrev.getFullYear() }} — {{ ruMonth(baseMonth.getMonth()) }} {{ baseMonth.getFullYear() }}
-            </template>
-            <template v-else-if="view==='months'">
-              {{ baseYear }}
-            </template>
-            <template v-else>
-              {{ yearsRangeStart }}–{{ yearsRangeStart + yearsPageSize - 1 }}
-            </template>
-          </div>
-          <button @click="next" class="px-3 py-2 rounded-lg border text-sm active:scale-95">›</button>
-        </div>
-
-        <!-- CONTENT -->
-        <div v-if="view==='days'" class="space-y-4">
-          <MonthGrid
-            :title="monthTitle(baseMonthPrev)"
-            :month="baseMonthPrev"
-            :start="start"
-            :end="end"
-            @select="onSelectDay"
-          />
-          <MonthGrid
-            :title="monthTitle(baseMonth)"
-            :month="baseMonth"
-            :start="start"
-            :end="end"
-            @select="onSelectDay"
-          />
-        </div>
-
-        <div v-else-if="view==='months'" class="grid grid-cols-3 gap-2 mt-2">
-          <button
-            v-for="m in 12"
-            :key="m"
-            class="py-3 rounded-lg border text-sm active:scale-95"
-            :class="monthCellClass(baseYear, m-1)"
-            @click="selectMonth(baseYear, m-1)"
-          >{{ ruMonth(m-1, 'short') }}</button>
-        </div>
-
-        <div v-else class="grid grid-cols-3 gap-2 mt-2">
-          <button
-            v-for="y in yearsPage"
-            :key="y"
-            class="py-3 rounded-lg border text-sm active:scale-95"
-            :class="yearCellClass(y)"
-            @click="selectYear(y)"
-          >{{ y }}</button>
+            class="py-2 bg-gray-100 rounded-xl active:scale-95 text-gray-700 font-medium"
+          >
+            {{ btn.label }}
+          </button>
         </div>
 
       </div>
@@ -158,11 +103,7 @@ function setRange(s, e) {
   start.value = isoDate(s)
   end.value   = isoDate(e)
 }
-function clearDates() {
-  start.value = null
-  end.value = null
-  emit('update:modelValue', [])
-}
+
 /* Buttons */
 const buttons = [
   { label: "Сегодня", action: () => setRange(today(), today()) },

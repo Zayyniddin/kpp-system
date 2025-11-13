@@ -134,9 +134,17 @@ function formatPhone(num) {
   return `+998 ${d.slice(0,2)} ${d.slice(2,5)} ${d.slice(5,7)} ${d.slice(7,9)}`
 }
 
-function formatDate(d) {
-  return new Date(d).toLocaleString('ru-RU', {
-    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+function formatDate(date) {
+  if (!date) return '—'
+  const d = new Date(date)
+  if (isNaN(d)) return '—'
+
+  return d.toLocaleString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',     // ← добавлено!
+    hour: '2-digit',
+    minute: '2-digit'
   })
 }
 
