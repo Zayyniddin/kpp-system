@@ -1,133 +1,127 @@
 <template>
-	<div class="space-y-6">
+  <div class="space-y-6">
 
-		<!-- Header -->
-		<div class="flex justify-between items-center">
-			<h2 class="text-xl font-bold text-gray-800">🚚 История выездов</h2>
-		</div>
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+      <h2 class="text-xl font-bold text-gray-800">🚚 История выездов</h2>
+    </div>
 
-		<!-- Filters -->
-		<div class="bg-white rounded-2xl p-5 shadow-md border border-gray-100 space-y-5">
+    <!-- Filters -->
+    <div class="bg-white rounded-2xl p-5 shadow-md border border-gray-100 space-y-5">
 
-			<!-- Date -->
-			<div class="space-y-2">
-				<label class="block text-sm font-semibold text-gray-700">Период</label>
-				<el-date-picker
-					v-model="dateRange"
-					type="daterange"
-					unlink-panels
-					start-placeholder="Дата с"
-					end-placeholder="Дата по"
-					value-format="YYYY-MM-DD"
-					class="w-full [&>.el-input__wrapper]:h-[52px] [&>.el-input__wrapper]:rounded-xl"
-					size="large"
-				/>
-			</div>
+      <!-- Date -->
+      <div class="space-y-2">
+        <label class="block text-sm font-semibold text-gray-700">Период</label>
+        <MobileDateRange v-model="dateRange" />
+      </div>
 
-			<!-- Warehouse -->
-			<div class="space-y-2">
-				<label class="block text-sm font-semibold text-gray-700">Склад</label>
-				<select
-					v-model="warehouseId"
-					class="w-full px-4 py-3 rounded-xl bg-white border border-gray-300 focus:border-blue-500 outline-none text-base transition-all"
-				>
-					<option value="">🏭 Все склады</option>
-					<option v-for="w in warehouses" :key="w.id" :value="w.id">
-						🏢 {{ w.name }}
-					</option>
-				</select>
-			</div>
-		</div>
+      <!-- Warehouse -->
+      <div class="space-y-2">
+        <label class="block text-sm font-semibold text-gray-700">Склад</label>
+        <select
+          v-model="warehouseId"
+          class="w-full px-4 py-3 rounded-xl bg-white border border-gray-300 focus:border-blue-500 outline-none text-base transition"
+        >
+          <option value="">🏭 Все склады</option>
+          <option v-for="w in warehouses" :key="w.id" :value="w.id">
+            🏢 {{ w.name }}
+          </option>
+        </select>
+      </div>
 
-		<!-- LIST -->
-		<div class="space-y-4 pb-2">
+    </div>
 
-			<!-- Card -->
-			<div
-				v-for="e in exits"
-				:key="e.id"
-				class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-2 active:scale-[.99] transition"
-			>
+    <!-- LIST -->
+    <div class="space-y-4 pb-2">
 
-				<!-- Pass number + Date -->
-				<div class="flex justify-between items-center">
-					<div class="text-lg font-bold text-gray-800">
-						🎫 Пропуск № {{ e.pass_number }}
-					</div>
-					<div class="text-xs text-gray-500">{{ formatDate(e.created_at) }}</div>
-				</div>
+      <!-- Loader -->
+      <div v-if="loading" class="flex justify-center py-8">
+        <div class="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+      </div>
 
-				<!-- Places -->
-				<div class="flex items-center gap-2 text-sm font-semibold text-gray-700">
-					📦 Мест: {{ e.places_count }}
-				</div>
+      <!-- Cards -->
+      <div
+        v-for="e in exits"
+        :key="e.id"
+        class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-2 active:scale-[.99] transition"
+      >
 
-				<!-- Direction -->
-				<div class="flex items-center gap-2 text-sm text-gray-700">
-					🛣 {{ e.direction === 'import' ? 'Импорт' : 'Экспорт' }}
-				</div>
+        <!-- Pass number + Date -->
+        <div class="flex justify-between items-center">
+          <div class="text-lg font-bold text-gray-800">
+            🎫 Пропуск № {{ e.pass_number }}
+          </div>
+          <div class="text-xs text-gray-500">{{ formatDate(e.created_at) }}</div>
+        </div>
 
-				<!-- Warehouse + Project -->
-				<div class="flex flex-wrap gap-2 pt-1">
-					<span class="px-2 py-0.5 rounded-md bg-blue-100 text-blue-700 text-xs flex items-center gap-1">
-						🏢 {{ e.warehouse_name }}
-					</span>
+        <!-- Places -->
+        <div class="flex items-center gap-2 text-sm font-semibold text-gray-700">
+          📦 Мест: {{ e.places_count }}
+        </div>
 
-					<span class="px-2 py-0.5 rounded-md bg-green-100 text-green-700 text-xs flex items-center gap-1">
-						📁 {{ e.project }}
-					</span>
-				</div>
+        <!-- Direction -->
+        <div class="flex items-center gap-2 text-sm text-gray-700">
+          🛣 {{ e.direction === 'import' ? 'Импорт' : 'Экспорт' }}
+        </div>
 
-				<!-- Comment -->
-				<div v-if="e.comment" class="text-xs text-gray-600 flex items-start gap-1 pt-1">
-					💬 <span>{{ e.comment }}</span>
-				</div>
-			</div>
+        <!-- Tags -->
+        <div class="flex flex-wrap gap-2 pt-1">
+          <span class="px-2 py-0.5 rounded-md bg-blue-100 text-blue-700 text-xs">
+            🏢 {{ e.warehouse_name }}
+          </span>
 
-			<!-- Empty -->
-			<div
-				v-if="!loading && exits.length === 0"
-				class="flex flex-col items-center text-center text-gray-400 py-8"
-			>
-				🚫 <div class="text-sm mt-1">Нет данных за выбранный период</div>
-			</div>
+          <span class="px-2 py-0.5 rounded-md bg-green-100 text-green-700 text-xs">
+            📁 {{ e.project }}
+          </span>
+        </div>
 
-			<!-- Loader -->
-			<div v-if="loading" class="space-y-2">
-				<div v-for="i in 5" :key="i" class="h-16 bg-gray-200 animate-pulse rounded-xl"></div>
-			</div>
-		</div>
+        <!-- Comment -->
+        <div v-if="e.comment" class="text-xs text-gray-600 flex gap-1 pt-1">
+          💬 {{ e.comment }}
+        </div>
+      </div>
 
-		<!-- Pagination -->
-		<div class="flex justify-between items-center bg-white border border-gray-200 rounded-xl p-3 shadow-sm sticky bottom-4">
-			<button
-				@click="prevPage"
-				:disabled="page===1 || loading"
-				class="px-4 py-2 text-sm font-medium rounded-lg bg-gray-50 text-gray-700 hover:bg-gray-100 disabled:opacity-40 active:scale-95 transition"
-			>
-				◀ Пред
-			</button>
+      <!-- Empty -->
+      <div
+        v-if="!loading && exits.length === 0"
+        class="flex flex-col items-center text-center text-gray-400 py-8"
+      >
+        🚫 <div class="text-sm mt-1">Нет данных за выбранный период</div>
+      </div>
 
-			<div class="text-sm font-semibold text-gray-700">
-				Стр. {{ page }}
-			</div>
+    </div>
 
-			<button
-				@click="nextPage"
-				:disabled="endReached || loading"
-				class="px-4 py-2 text-sm font-medium rounded-lg bg-gray-50 text-gray-700 hover:bg-gray-100 disabled:opacity-40 active:scale-95 transition"
-			>
-				След ▶
-			</button>
-		</div>
+    <!-- Pagination -->
+    <div class="flex justify-between items-center bg-white border border-gray-200 rounded-xl p-3 shadow-sm sticky bottom-4">
+      <button
+        @click="prevPage"
+        :disabled="page===1 || loading"
+        class="px-4 py-2 text-sm font-medium rounded-lg bg-gray-50 text-gray-700 disabled:opacity-40 active:scale-95"
+      >
+        ◀ Пред
+      </button>
 
-	</div>
+      <div class="text-sm font-semibold text-gray-700">
+        Стр. {{ page }}
+      </div>
+
+      <button
+        @click="nextPage"
+        :disabled="endReached || loading"
+        class="px-4 py-2 text-sm font-medium rounded-lg bg-gray-50 text-gray-700 disabled:opacity-40 active:scale-95"
+      >
+        След ▶
+      </button>
+    </div>
+
+  </div>
 </template>
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
-import { useAxios } from '~/composables/useAxios'
 import { ElNotification } from 'element-plus'
+import MobileDateRange from '~/components/MobileDateRange.vue'
+import { useAxios } from '~/composables/useAxios'
 
 const $axios = useAxios()
 
@@ -136,65 +130,68 @@ const warehouses = ref([])
 
 const warehouseId = ref('')
 const dateRange = ref([])
+
 const page = ref(1)
 const limit = 12
 const endReached = ref(false)
 const loading = ref(false)
 
 function formatDate(date) {
-	return new Date(date).toLocaleString('ru-RU', {
-		day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
-	})
+  return new Date(date).toLocaleString('ru-RU', {
+    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+  })
 }
 
 async function loadWarehouses() {
-	const { data } = await $axios.get('/admin/warehouses')
-	warehouses.value = data
+  const { data } = await $axios.get('/admin/warehouses')
+  warehouses.value = data
 }
 
 async function fetchLogs() {
-	loading.value = true
-	try {
-		const params = {
-			skip: (page.value - 1) * limit,
-			limit,
-			warehouse_id: warehouseId.value || undefined,
-			start_date: dateRange.value?.[0] || undefined,
-			end_date: dateRange.value?.[1] || undefined,
-		}
+  loading.value = true
+  try {
+    const params = {
+      skip: (page.value - 1) * limit,
+      limit,
+      warehouse_id: warehouseId.value || undefined,
+      start_date: dateRange.value?.[0] || undefined,
+      end_date: dateRange.value?.[1] || undefined,
+    }
 
-		const { data } = await $axios.get('/admin/logs/exits', { params })
-		exits.value = data
-		endReached.value = data.length < limit
+    const { data } = await $axios.get('/admin/logs/exits', { params })
+    exits.value = data
+    endReached.value = data.length < limit
 
-	} catch {
-		ElNotification({ title: 'Ошибка', message: 'Не удалось загрузить данные', type: 'error' })
-	} finally {
-		loading.value = false
-	}
+  } catch {
+    ElNotification({
+      title: 'Ошибка',
+      message: 'Не удалось загрузить данные',
+      type: 'error'
+    })
+  } finally {
+    loading.value = false
+  }
 }
 
 function refresh() {
-	page.value = 1
-	fetchLogs()
+  page.value = 1
+  fetchLogs()
 }
+
 function nextPage() {
-	if (!endReached.value) {
-		page.value++
-		fetchLogs()
-	}
+  page.value++
+  fetchLogs()
 }
+
 function prevPage() {
-	if (page.value > 1) {
-		page.value--
-		fetchLogs()
-	}
+  page.value--
+  fetchLogs()
 }
 
 watch([dateRange, warehouseId], refresh)
 
 onMounted(() => {
-	loadWarehouses()
-	fetchLogs()
+  loadWarehouses()
+  fetchLogs()
 })
 </script>
